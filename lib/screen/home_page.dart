@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
           UnsplashCard card = cards[index];
           return _Image(card: card);
         },
-        staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 2 : 4),
+        staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 2 : 3),
       ),
     );
   }
