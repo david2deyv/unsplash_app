@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:unsplash_app/json/cards.dart';
 import 'package:unsplash_app/provider/unsplash_provider.dart';
 import 'package:unsplash_app/screen/image_details.dart';
-import 'package:unsplash_app/services/unsplash_image.dart';
+import 'package:unsplash_app/widgets/unsplash_image.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -16,7 +16,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Consumer<UnsplashProvider>(
       builder: (context, provider, _) {
-        Widget body;
+        Widget body = SizedBox.shrink();
         final state = provider.state;
         if (state is UnsplashStateLoading) {
           body = Center(
@@ -35,8 +35,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           );
-        } else {
-          final cards = (state as UnsplashStateSuccess).cards;
+        } else if (state is UnsplashStateSuccess) {
+          final cards = state.cards;
 
           body = StaggeredGridView.countBuilder(
             crossAxisCount: 4,
@@ -94,70 +94,67 @@ class _ImageState extends State<_Image> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: 150),
-      child: Card(
-        margin: EdgeInsets.all(6),
-        clipBehavior: Clip.antiAlias,
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ImageDetailsPage(
-                card: widget.card,
-              ),
+    return Card(
+      margin: EdgeInsets.all(6),
+      clipBehavior: Clip.antiAlias,
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImageDetailsPage(
+              card: widget.card,
             ),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                top: 0,
-                child: Hero(
-                  tag: widget.card.toString(),
-                  child: UnsplashImage(
-                    url: widget.card.urls.regular,
-                    fit: BoxFit.cover,
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              top: 0,
+              child: Hero(
+                tag: widget.card.toString(),
+                child: UnsplashImage(
+                  url: widget.card.urls.regular,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [Colors.transparent, Colors.black87],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.card.user.username, style: _userNameTextStyle),
+                      if (widget.card.altDescription != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            widget.card.altDescription,
+                            style: _descriptionTextStyle,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [Colors.transparent, Colors.black87],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter),
-                  ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8.0).copyWith(top: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.card.user.username, style: _userNameTextStyle),
-                        if (widget.card.altDescription != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(
-                              widget.card.altDescription,
-                              style: _descriptionTextStyle,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );

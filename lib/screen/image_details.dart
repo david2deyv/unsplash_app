@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pinch_zoom/pinch_zoom.dart';
-import 'package:unsplash_app/services/unsplash_image.dart';
+import 'package:unsplash_app/widgets/unsplash_image.dart';
 
 import '../json/cards.dart';
 

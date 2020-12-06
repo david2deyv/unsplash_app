@@ -31,7 +31,7 @@ class UnsplashProvider extends ChangeNotifier {
   UnsplashState state = UnsplashStateLoading();
 
   void forceError() {
-    state = UnsplashStateError('Forced error state.');
+    state = UnsplashStateError('Showcase for error state.');
     notifyListeners();
   }
 
@@ -43,7 +43,7 @@ class UnsplashProvider extends ChangeNotifier {
       state = UnsplashStateSuccess(cards);
       notifyListeners();
     } catch (e) {
-      state = UnsplashStateError('Something went wrong');
+      state = UnsplashStateError(e.toString());
       notifyListeners();
     }
   }
