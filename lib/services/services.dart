@@ -12,7 +12,7 @@ class Services {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final List<UnsplashCard> listCards = cardsFromJson(response.body);
-        log(listCards.toString());
+        // log(listCards.toString());
         return listCards;
       } else {
         return List<UnsplashCard>();
