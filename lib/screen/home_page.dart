@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:provider/provider.dart';
 import 'package:unsplash_app/json/cards.dart';
+import 'package:unsplash_app/provider/unsplash_provider.dart';
 import 'package:unsplash_app/screen/image_details.dart';
-import 'package:unsplash_app/services/services.dart';
 import 'package:unsplash_app/services/unsplash_image.dart';
 
 class HomePage extends StatefulWidget {
@@ -11,38 +12,58 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<UnsplashCard> cards = [];
-  bool loading;
-
-  @override
-  void initState() {
-    super.initState();
-    loading = true;
-    Services.getCards().then((list) {
-      setState(() {
-        cards = list;
-        loading = false;
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        title: Text(loading ? 'Loading...' : 'Unsplash'),
-        centerTitle: true,
-      ),
-      body: StaggeredGridView.countBuilder(
-        crossAxisCount: 4,
-        itemCount: cards.length,
-        itemBuilder: (context, index) {
-          UnsplashCard card = cards[index];
-          return _Image(card: card);
-        },
-        staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 2 : 3),
-      ),
+    return Consumer<UnsplashProvider>(
+      builder: (context, provider, _) {
+        Widget body;
+        final state = provider.state;
+        if (state is UnsplashStateLoading) {
+          body = Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(Colors.deepPurple),
+            ),
+          );
+        } else if (state is UnsplashStateError) {
+          body = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Center(child: Text(state.errorMessage)),
+              FlatButton(
+                onPressed: () => provider.loadCards(),
+                child: Text('Try again'),
+              ),
+            ],
+          );
+        } else {
+          final cards = (state as UnsplashStateSuccess).cards;
+
+          body = StaggeredGridView.countBuilder(
+            crossAxisCount: 4,
+            itemCount: cards.length,
+            itemBuilder: (context, index) => _Image(card: cards[index]),
+            staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 2 : 3),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.deepPurple,
+            title: Text(state is UnsplashStateLoading ? 'Loading...' : 'Unsplash'),
+            centerTitle: true,
+            actions: [
+              FlatButton(
+                onPressed: () => provider.forceError(),
+                child: Text(
+                  'Force error',
+                  style: TextStyle(color: Colors.white),
+                ),
+              )
+            ],
+          ),
+          body: body,
+        );
+      },
     );
   }
 }
