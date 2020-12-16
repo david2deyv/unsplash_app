@@ -17,7 +17,7 @@ class UnsplashProvider extends ChangeNotifier {
   PaginationState _state = PaginationState.firstPageLoading();
 
   List<UnsplashCard> _data = [];
-  final int perPage = 30;
+  final int perPage = 10;
   int _totalCount = 0;
   bool get _hasNext => _data.length < _totalCount;
   int get _page => (_data.length / perPage).ceil();
@@ -41,11 +41,14 @@ class UnsplashProvider extends ChangeNotifier {
 
     if(!_hasNext) return;
 
+
+
     _changeState(PaginationState.nextPageLoading(data: _data));
 
     try{
       final nextDataResponse = await Services.getCards(perPage: perPage, page: _page + 1);
       _data.addAll(nextDataResponse.cards);
+
 
       _changeState(PaginationState.nextPage(data: _data));
     } catch(e) {
@@ -54,6 +57,25 @@ class UnsplashProvider extends ChangeNotifier {
     }
 
 
+  }
+
+  Future<void> loadRefresh() async{
+    if(_state is RefreshLoading) return;
+
+    if(_state is NextPageLoading) return;
+
+    _changeState(PaginationState.refreshLoading(data: _data));
+
+    try{
+       final response = await Services.getCards(perPage: perPage);
+       _data = response.cards;
+
+       _changeState(PaginationState.refresh(data: _data));
+
+    } catch (e) {
+      log(e);
+      _changeState(PaginationState.refreshError(data: _data, errorMessage: 'Refresh Error'));
+    }
   }
 
   void _changeState(PaginationState newState) {

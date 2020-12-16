@@ -25,6 +25,11 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
     Provider.of<UnsplashProvider>(context, listen: false).loadNextPage();
   }
 
+
+  Future<void> scrollRefresh() async {
+    await Provider.of<UnsplashProvider>(context, listen: false).loadRefresh();
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -67,6 +72,14 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
           );
         } else if (state is NextPage) {
           data = state.data;
+        } else if(state is RefreshLoading) {
+          beforeData = Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(Colors.deepPurple),
+            ),
+          );
+        } else if(state is Refresh) {
+          data = state.data;
         }
 
         return Scaffold(
@@ -80,16 +93,20 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
               if (beforeData != null) beforeData,
               if (data?.isNotEmpty == true)
                 Expanded(
-                  child: StaggeredGridView.countBuilder(
-                    key: ValueKey('photos'),
-                    controller: _scrollController,
-                    crossAxisCount: 4,
-                    itemCount: data.length,
-                    itemBuilder: (context, index) => _Image(
-                      card: data[index],
-                      fakeError: index != 0 && (index % 5) == 0,
+                  child: RefreshIndicator(
+                    onRefresh: scrollRefresh,
+                    child: StaggeredGridView.countBuilder(
+                      key: ValueKey('photos'),
+                      controller: _scrollController,
+                      crossAxisCount: 4,
+                      itemCount: data.length,
+                      itemBuilder: (context, index) => _Image(
+                        card: data[index],
+                        fakeError: index != 0 && (index % 7) == 0,
+
+                      ),
+                      staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 3 : 2),
                     ),
-                    staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 2 : 3),
                   ),
                 ),
               if (afterData != null) afterData,
