@@ -1,50 +1,63 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:unsplash_app/pagination_state.dart';
 
 import '../json/cards.dart';
 import '../services/services.dart';
 
-/*--------------------------- [State] ---------------------------*/
-abstract class UnsplashState {}
-
-class UnsplashStateLoading implements UnsplashState {}
-
-class UnsplashStateError implements UnsplashState {
-  UnsplashStateError(this.errorMessage);
-
-  final String errorMessage;
-}
-
-class UnsplashStateSuccess implements UnsplashState {
-  UnsplashStateSuccess(this.cards);
-
-  final List<UnsplashCard> cards;
-}
-
-/*--------------------------- [Provider] ---------------------------*/
-
 class UnsplashProvider extends ChangeNotifier {
+
   UnsplashProvider() {
-    // Load cards on create
-    loadCards();
+    loadFirst();
   }
 
-  UnsplashState state = UnsplashStateLoading();
+  PaginationState get state => _state;
 
-  void forceError() {
-    state = UnsplashStateError('Showcase for error state.');
-    notifyListeners();
+  PaginationState _state = PaginationState.firstPageLoading();
+
+  List<UnsplashCard> _data = [];
+  final int perPage = 30;
+  int _totalCount = 0;
+  bool get _hasNext => _data.length < _totalCount;
+  int get _page => (_data.length / perPage).ceil();
+
+  Future<void> loadFirst() async{
+    _changeState(PaginationState.firstPageLoading());
+      try{
+        final response  = await Services.getCards(perPage: perPage);
+        _totalCount = response.totalCount;
+        _data = response.cards;
+
+        _changeState(PaginationState.firstPage(data: _data));
+      } catch (e){
+        log(e);
+        _changeState(PaginationState.firstPageError(errorMessage: 'Error Data'));
+      }
   }
 
-  void loadCards() async {
-    try {
-      state = UnsplashStateLoading();
-      notifyListeners();
-      final cards = await Services.getCards();
-      state = UnsplashStateSuccess(cards);
-      notifyListeners();
-    } catch (e) {
-      state = UnsplashStateError(e.toString());
-      notifyListeners();
+  Future<void> loadNextPage() async{
+    if(_state is NextPageLoading) return;
+
+    if(!_hasNext) return;
+
+    _changeState(PaginationState.nextPageLoading(data: _data));
+
+    try{
+      final nextDataResponse = await Services.getCards(perPage: perPage, page: _page + 1);
+      _data.addAll(nextDataResponse.cards);
+
+      _changeState(PaginationState.nextPage(data: _data));
+    } catch(e) {
+      log(e);
+      _changeState(PaginationState.nextPageError(data: _data, errorMessage: 'Next Page Error'));
     }
+
+
+  }
+
+  void _changeState(PaginationState newState) {
+    _state = newState;
+    notifyListeners();
   }
 }
