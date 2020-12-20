@@ -36,30 +36,7 @@ class UnsplashProvider extends ChangeNotifier {
       }
   }
 
-  Future<void> loadNextPage() async{
-    if(_state is NextPageLoading) return;
-
-    if(!_hasNext) return;
-
-
-
-    _changeState(PaginationState.nextPageLoading(data: _data));
-
-    try{
-      final nextDataResponse = await Services.getCards(perPage: perPage, page: _page + 1);
-      _data.addAll(nextDataResponse.cards);
-
-
-      _changeState(PaginationState.nextPage(data: _data));
-    } catch(e) {
-      log(e);
-      _changeState(PaginationState.nextPageError(data: _data, errorMessage: 'Next Page Error'));
-    }
-
-
-  }
-
-  Future<void> loadRefresh() async{
+  Future<void> loadRefresh() async {
     if(_state is RefreshLoading) return;
 
     if(_state is NextPageLoading) return;
@@ -67,16 +44,38 @@ class UnsplashProvider extends ChangeNotifier {
     _changeState(PaginationState.refreshLoading(data: _data));
 
     try{
-       final response = await Services.getCards(perPage: perPage);
-       _data = response.cards;
+      final response = await Services.getCards(perPage: perPage);
+      _totalCount = response.totalCount;
+      _data = response.cards;
 
-       _changeState(PaginationState.refresh(data: _data));
+      _changeState(PaginationState.refresh(data: _data));
 
     } catch (e) {
       log(e);
       _changeState(PaginationState.refreshError(data: _data, errorMessage: 'Refresh Error'));
     }
   }
+
+  Future<void> loadNextPage() async{
+    if(_state is NextPageLoading) return;
+
+    if(!_hasNext) return;
+
+    _changeState(PaginationState.nextPageLoading(data: _data));
+
+    try{
+      final nextDataResponse = await Services.getCards(perPage: perPage, page: _page + 1);
+      _data.addAll(nextDataResponse.cards);
+      _changeState(PaginationState.nextPage(data: _data));
+
+    } catch(e) {
+      log(e);
+      _changeState(PaginationState.nextPageError(data: _data, errorMessage: 'Next Page Error'));
+    }
+
+  }
+
+
 
   void _changeState(PaginationState newState) {
     _state = newState;

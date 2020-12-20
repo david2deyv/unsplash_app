@@ -25,6 +25,7 @@ abstract class PaginationState {
     @required List<UnsplashCard> data,
     @required String errorMessage,
   }) = NextPageError;
+
 }
 
 /*--------------------------- [Refresh] ---------------------------*/
@@ -89,4 +90,18 @@ class NextPageError implements PaginationState {
 
   final List<UnsplashCard> data;
   final String errorMessage;
+}
+
+extension PaginationStateExtensions on PaginationState {
+  List<UnsplashCard> get getData {
+    final state = this;
+    if(state is FirstPage) return state.data;
+    if(state is RefreshLoading) return state.data;
+    if(state is Refresh) return state.data;
+    if(state is RefreshError) return state.data;
+    if(state is NextPage) return state.data;
+    if(state is NextPageLoading) return state.data;
+    if(state is NextPageError) return state.data;
+    return [];
+  }
 }

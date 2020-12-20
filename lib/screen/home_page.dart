@@ -6,6 +6,7 @@ import 'package:unsplash_app/json/cards.dart';
 import 'package:unsplash_app/pagination_state.dart';
 import 'package:unsplash_app/provider/unsplash_provider.dart';
 import 'package:unsplash_app/screen/image_details.dart';
+import 'package:unsplash_app/widgets/last_card.dart';
 import 'package:unsplash_app/widgets/unsplash_image.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,7 +26,6 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
     Provider.of<UnsplashProvider>(context, listen: false).loadNextPage();
   }
 
-
   Future<void> scrollRefresh() async {
     await Provider.of<UnsplashProvider>(context, listen: false).loadRefresh();
   }
@@ -44,6 +44,7 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
         List<UnsplashCard> data = [];
         Widget beforeData;
         Widget afterData;
+        bool nextPageLoading = false;
         if (state is FirstPageLoading) {
           beforeData = Center(
             child: CircularProgressIndicator(
@@ -61,26 +62,9 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
               ),
             ],
           );
-        } else if (state is FirstPage) {
-          data = state.data;
-        } else if (state is NextPageLoading) {
-          data = state.data;
-          afterData = Align(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(Colors.deepPurple),
-            ),
-          );
-        } else if (state is NextPage) {
-          data = state.data;
-        } else if(state is RefreshLoading) {
-          beforeData = Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(Colors.deepPurple),
-            ),
-          );
-        } else if(state is Refresh) {
-          data = state.data;
         }
+        // Get data if present
+        data = state.getData;
 
         return Scaffold(
           appBar: AppBar(
@@ -99,12 +83,16 @@ class _HomePageState extends State<HomePage> with PaginationTrigger {
                       key: ValueKey('photos'),
                       controller: _scrollController,
                       crossAxisCount: 4,
-                      itemCount: data.length,
-                      itemBuilder: (context, index) => _Image(
-                        card: data[index],
-                        fakeError: index != 0 && (index % 7) == 0,
-
-                      ),
+                      itemCount: data.length + (nextPageLoading ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (nextPageLoading && index == data.length) {
+                          return lastCard();
+                        }
+                        return _Image(
+                          card: data[index],
+                          fakeError: index != 0 && (index % 7) == 0,
+                        );
+                      },
                       staggeredTileBuilder: (index) => StaggeredTile.count(2, index.isEven ? 3 : 2),
                     ),
                   ),
@@ -215,3 +203,5 @@ class _ImageState extends State<_Image> with SingleTickerProviderStateMixin {
     );
   }
 }
+
+
